@@ -17,7 +17,7 @@ Charactersheet is a locally-running tabletop RPG character tracker. It lets you 
 - **Local storage**: SQLite via [drift](https://drift.simonbinder.eu/) (type-safe Dart ORM), with foreign-key enforcement and platform-native bindings via `sqlite3_flutter_libs`
 - **State**: [Riverpod](https://riverpod.dev/) providers expose reactive streams for the tree view and one-shot futures for detail/form pages
 - **Universe-driven UI**: forms read the active universe's metadata at runtime to render the right stat/track/currency/skill editors per character - no rebuild needed when you add a new system
-- **Cross-platform-ready**: Flutter codebase compiles to Linux desktop today; Android / iOS targets can be enabled with `flutter create --platforms=android,ios .` when you're ready to ship mobile
+- **Cross-platform-ready**: Flutter codebase compiles to Linux desktop today; Android / iOS targets can be enabled with `flutter create --platforms=android,ios .` for future mobile releases while keeping the same codebase
 
 # Getting Started
 
