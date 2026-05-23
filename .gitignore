@@ -1,3 +1,7 @@
+# Project-specific: test data and local database files
+sample_universe.json
+*.sqlite
+
 # Miscellaneous
 *.class
 *.log

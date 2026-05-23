@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database.dart';
 import '../../state/providers.dart';
-import '../widgets/confirm_dialogs.dart';
 import 'character_detail_page.dart';
 import 'character_form_page.dart';
+import '../widgets/confirm_dialogs.dart';
 import 'universe_detail_page.dart';
 import 'universe_form_page.dart';
 
@@ -20,24 +20,23 @@ class TreeHomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Character Sheet'),
-        actions: [
-          IconButton(
-            tooltip: 'Import universe from JSON',
-            icon: const Icon(Icons.file_download_outlined),
-            onPressed: () => _importUniverse(context, ref),
-          ),
-          IconButton(
-            tooltip: 'New universe',
-            icon: const Icon(Icons.add),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const UniverseFormPage()),
-            ),
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Add universe'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const UniverseFormPage()),
+                ),
+              ),
+            ),
+          ),
           active.when(
             loading: () => const Center(child: Padding(
               padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
@@ -47,7 +46,7 @@ class TreeHomePage extends ConsumerWidget {
                 if (list.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Text('No universes yet. Tap + to create one.'),
+                    child: Text('No universes yet. Use the button above to create one.'),
                   ),
                 for (final u in list) _UniverseBlock(universe: u),
               ],
@@ -80,18 +79,6 @@ class TreeHomePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _importUniverse(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final repo = ref.read(repositoryProvider);
-    final picked = await pickJsonFile();
-    if (picked == null) return;
-    try {
-      await repo.importUniverseFromJson(picked);
-      messenger.showSnackBar(const SnackBar(content: Text('Universe imported.')));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
-    }
-  }
 }
 
 class _UniverseBlock extends ConsumerStatefulWidget {

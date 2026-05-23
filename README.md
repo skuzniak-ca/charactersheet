@@ -67,15 +67,28 @@ dart run build_runner build
 
 ## Usage
 
+### Running the compiled release
+
+After building (see below), launch the app directly - no Flutter toolchain needed:
+
 ```bash
-# Run on Linux desktop in debug mode
-flutter run -d linux
+./build/linux/x64/release/bundle/charactersheet
+```
 
-# Build a release binary
+The `bundle/` folder contains the binary and its shared libraries. Keep the whole folder together if you move it.
+
+### Compiling yourself
+
+```bash
+# Release build (optimised, no debug overhead - recommended)
 flutter build linux --release
+# Output: build/linux/x64/release/bundle/charactersheet
 
-# Run a prebuilt debug binary directly
-./build/linux/x64/debug/bundle/charactersheet
+# Debug build (includes hot reload and Dart VM - useful during development)
+flutter run -d linux
+# Or build without launching:
+flutter build linux --debug
+# Output: build/linux/x64/debug/bundle/charactersheet
 ```
 
 The first launch seeds the database with seven default universes. The SQLite file lives at `~/.local/share/com.charactersheet.charactersheet/charactersheet.sqlite`; delete it to reset back to factory state.

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repository.dart';
 import '../../state/providers.dart';
+import '../widgets/confirm_dialogs.dart';
 
 class UniverseFormPage extends ConsumerStatefulWidget {
   final String? universeId;
@@ -16,6 +17,7 @@ class _UniverseFormPageState extends ConsumerState<UniverseFormPage> {
   final _formKey = GlobalKey<FormState>();
   late UniverseDraft _draft;
   bool _loading = true;
+  int _formRevision = 0;
 
   @override
   void initState() {
@@ -56,6 +58,23 @@ class _UniverseFormPageState extends ConsumerState<UniverseFormPage> {
     setState(() => _loading = false);
   }
 
+  Future<void> _importFromJson() async {
+    final jsonStr = await pickJsonFile();
+    if (jsonStr == null) return;
+    try {
+      final draft = universeDraftFromJson(jsonStr);
+      setState(() {
+        _draft = draft;
+        _formRevision++;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not parse JSON: $e')),
+      );
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final repo = ref.read(repositoryProvider);
@@ -85,8 +104,19 @@ class _UniverseFormPageState extends ConsumerState<UniverseFormPage> {
       body: Form(
         key: _formKey,
         child: ListView(
+          key: ValueKey(_formRevision),
           padding: const EdgeInsets.all(16),
           children: [
+            if (widget.universeId == null) ...[
+              OutlinedButton.icon(
+                icon: const Icon(Icons.file_download_outlined),
+                label: const Text('Import from JSON'),
+                onPressed: _importFromJson,
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+            ],
             TextFormField(
               initialValue: _draft.name,
               decoration: const InputDecoration(labelText: 'Universe name'),

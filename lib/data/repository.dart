@@ -510,38 +510,44 @@ class CharacterRepository {
   }
 
   Future<String> importUniverseFromJson(String jsonStr) async {
-    final raw = json.decode(jsonStr) as Map<String, dynamic>;
-    final draft = UniverseDraft(
-      name: (raw['name'] as String?) ?? 'Imported Universe',
-      playGroup: (raw['playGroup'] as String?) ?? '',
-    );
-    final stats = (raw['stats'] as List?) ?? const [];
-    final abbrToId = <String, String>{};
-    for (final s in stats) {
-      final m = s as Map<String, dynamic>;
-      final d = StatDraft(
-        name: (m['name'] as String?) ?? '',
-        abbreviation: (m['abbreviation'] as String?) ?? '',
-      );
-      draft.stats.add(d);
-      if (d.abbreviation.isNotEmpty) abbrToId[d.abbreviation] = d.id;
-    }
-    for (final t in (raw['resourceTracks'] as List?) ?? const []) {
-      draft.tracks.add(TrackDraft(name: t as String));
-    }
-    for (final c in (raw['currencies'] as List?) ?? const []) {
-      draft.currencies.add(TrackDraft(name: c as String));
-    }
-    for (final s in (raw['skills'] as List?) ?? const []) {
-      final m = s as Map<String, dynamic>;
-      final linkedAbbr = m['linkedStatAbbr'] as String?;
-      draft.skills.add(SkillDraft(
-        name: (m['name'] as String?) ?? '',
-        linkedStatId: linkedAbbr != null ? abbrToId[linkedAbbr] : null,
-      ));
-    }
-    return createUniverseFromDraft(draft);
+    return createUniverseFromDraft(universeDraftFromJson(jsonStr));
   }
+}
+
+/// Parses a universe JSON export into a [UniverseDraft] without saving it.
+/// Useful for pre-filling the universe form before the user confirms.
+UniverseDraft universeDraftFromJson(String jsonStr) {
+  final raw = json.decode(jsonStr) as Map<String, dynamic>;
+  final draft = UniverseDraft(
+    name: (raw['name'] as String?) ?? 'Imported Universe',
+    playGroup: (raw['playGroup'] as String?) ?? '',
+  );
+  final stats = (raw['stats'] as List?) ?? const [];
+  final abbrToId = <String, String>{};
+  for (final s in stats) {
+    final m = s as Map<String, dynamic>;
+    final d = StatDraft(
+      name: (m['name'] as String?) ?? '',
+      abbreviation: (m['abbreviation'] as String?) ?? '',
+    );
+    draft.stats.add(d);
+    if (d.abbreviation.isNotEmpty) abbrToId[d.abbreviation] = d.id;
+  }
+  for (final t in (raw['resourceTracks'] as List?) ?? const []) {
+    draft.tracks.add(TrackDraft(name: t as String));
+  }
+  for (final c in (raw['currencies'] as List?) ?? const []) {
+    draft.currencies.add(TrackDraft(name: c as String));
+  }
+  for (final s in (raw['skills'] as List?) ?? const []) {
+    final m = s as Map<String, dynamic>;
+    final linkedAbbr = m['linkedStatAbbr'] as String?;
+    draft.skills.add(SkillDraft(
+      name: (m['name'] as String?) ?? '',
+      linkedStatId: linkedAbbr != null ? abbrToId[linkedAbbr] : null,
+    ));
+  }
+  return draft;
 }
 
 class InventoryItemEntry {
