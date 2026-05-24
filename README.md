@@ -52,6 +52,8 @@ dev_dependencies:
 
 ## Installation
 
+Charactersheet is built with Flutter, so you need the Flutter SDK first. Flutter has no installer - download the SDK archive (3.44+), extract it somewhere (e.g. `~/flutter`), and add its `bin/` directory to your `PATH`. See the [official install guide](https://docs.flutter.dev/get-started/install/linux).
+
 ```bash
 # Clone the repo
 git clone https://github.com/skuzniak-ca/charactersheet.git
@@ -67,16 +69,6 @@ dart run build_runner build
 
 ## Usage
 
-### Running the compiled release
-
-After building (see below), launch the app directly - no Flutter toolchain needed:
-
-```bash
-./build/linux/x64/release/bundle/charactersheet
-```
-
-The `bundle/` folder contains the binary and its shared libraries. Keep the whole folder together if you move it.
-
 ### Compiling yourself
 
 ```bash
@@ -90,6 +82,18 @@ flutter run -d linux
 flutter build linux --debug
 # Output: build/linux/x64/debug/bundle/charactersheet
 ```
+
+The `build/` folder is produced by these commands; it is generated output and is not committed to the repo.
+
+### Running the compiled release
+
+Once you've built a release, launch the app directly - no Flutter toolchain needed:
+
+```bash
+./build/linux/x64/release/bundle/charactersheet
+```
+
+The `bundle/` folder contains the binary and its shared libraries. Keep the whole folder together if you move it.
 
 The first launch seeds the database with seven default universes. The SQLite file lives at `~/.local/share/com.charactersheet.charactersheet/charactersheet.sqlite`; delete it to reset back to factory state.
 
