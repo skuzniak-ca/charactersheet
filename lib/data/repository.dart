@@ -172,10 +172,29 @@ class CharacterRepository {
         name: Value(draft.name),
         playGroup: Value(draft.playGroup),
       ));
-      await (db.delete(db.statDefs)..where((s) => s.universeId.equals(id))).go();
-      await (db.delete(db.resourceTrackDefs)..where((s) => s.universeId.equals(id))).go();
-      await (db.delete(db.currencyDefs)..where((s) => s.universeId.equals(id))).go();
-      await (db.delete(db.skillDefs)..where((s) => s.universeId.equals(id))).go();
+
+      // Reconcile defs by id instead of delete-all-then-reinsert. The value
+      // tables (stat/resource/currency/skill values) cascade-delete when a def
+      // row is removed, so wiping every def would also wipe every character's
+      // values. Delete only the defs the draft dropped; _writeDefs then upserts
+      // the rest, leaving kept defs (and their values) intact.
+      final statIds = draft.stats.map((s) => s.id).toList();
+      await (db.delete(db.statDefs)
+            ..where((s) => s.universeId.equals(id) & s.id.isNotIn(statIds)))
+          .go();
+      final trackIds = draft.tracks.map((t) => t.id).toList();
+      await (db.delete(db.resourceTrackDefs)
+            ..where((s) => s.universeId.equals(id) & s.id.isNotIn(trackIds)))
+          .go();
+      final currencyIds = draft.currencies.map((c) => c.id).toList();
+      await (db.delete(db.currencyDefs)
+            ..where((s) => s.universeId.equals(id) & s.id.isNotIn(currencyIds)))
+          .go();
+      final skillIds = draft.skills.map((s) => s.id).toList();
+      await (db.delete(db.skillDefs)
+            ..where((s) => s.universeId.equals(id) & s.id.isNotIn(skillIds)))
+          .go();
+
       await _writeDefs(id, draft);
     });
   }
@@ -183,7 +202,7 @@ class CharacterRepository {
   Future<void> _writeDefs(String universeId, UniverseDraft draft) async {
     for (var i = 0; i < draft.stats.length; i++) {
       final s = draft.stats[i];
-      await db.into(db.statDefs).insert(StatDefsCompanion.insert(
+      await db.into(db.statDefs).insertOnConflictUpdate(StatDefsCompanion.insert(
             id: s.id,
             universeId: universeId,
             name: s.name,
@@ -193,7 +212,7 @@ class CharacterRepository {
     }
     for (var i = 0; i < draft.tracks.length; i++) {
       final t = draft.tracks[i];
-      await db.into(db.resourceTrackDefs).insert(ResourceTrackDefsCompanion.insert(
+      await db.into(db.resourceTrackDefs).insertOnConflictUpdate(ResourceTrackDefsCompanion.insert(
             id: t.id,
             universeId: universeId,
             name: t.name,
@@ -202,7 +221,7 @@ class CharacterRepository {
     }
     for (var i = 0; i < draft.currencies.length; i++) {
       final c = draft.currencies[i];
-      await db.into(db.currencyDefs).insert(CurrencyDefsCompanion.insert(
+      await db.into(db.currencyDefs).insertOnConflictUpdate(CurrencyDefsCompanion.insert(
             id: c.id,
             universeId: universeId,
             name: c.name,
@@ -211,7 +230,7 @@ class CharacterRepository {
     }
     for (var i = 0; i < draft.skills.length; i++) {
       final s = draft.skills[i];
-      await db.into(db.skillDefs).insert(SkillDefsCompanion.insert(
+      await db.into(db.skillDefs).insertOnConflictUpdate(SkillDefsCompanion.insert(
             id: s.id,
             universeId: universeId,
             name: s.name,
@@ -322,6 +341,9 @@ class CharacterRepository {
     required Map<String, ({int value, bool proficient})> skillValues,
     required List<InventoryItemEntry> inventory,
   }) async {
+    final existing = await (db.select(db.characters)..where((c) => c.id.equals(id)))
+        .getSingleOrNull();
+    final oldImagePath = existing?.imagePath;
     await db.transaction(() async {
       await (db.update(db.characters)..where((c) => c.id.equals(id))).write(
         CharactersCompanion(
@@ -396,6 +418,13 @@ class CharacterRepository {
             ));
       }
     });
+
+    // Remove the previous portrait copy if it was replaced or cleared. Done
+    // after the commit so the DB never references a deleted file.
+    if (oldImagePath != null && oldImagePath != imagePath) {
+      final f = File(oldImagePath);
+      if (await f.exists()) await f.delete();
+    }
   }
 
   Future<void> deleteCharacter(String id) async {
@@ -507,10 +536,6 @@ class CharacterRepository {
       }).toList(),
     };
     return const JsonEncoder.withIndent('  ').convert(data);
-  }
-
-  Future<String> importUniverseFromJson(String jsonStr) async {
-    return createUniverseFromDraft(universeDraftFromJson(jsonStr));
   }
 }
 
