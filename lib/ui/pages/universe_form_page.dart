@@ -82,6 +82,9 @@ class _UniverseFormPageState extends ConsumerState<UniverseFormPage> {
       await repo.createUniverseFromDraft(_draft);
     } else {
       await repo.updateUniverseFromDraft(widget.universeId!, _draft);
+      // Refresh the cached defs so the detail page reflects the edit, mirroring
+      // the character form's invalidate of characterFullProvider after a save.
+      ref.invalidate(universeWithDefsProvider(widget.universeId!));
     }
     if (mounted) Navigator.of(context).pop();
   }
